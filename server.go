@@ -37,7 +37,7 @@ func (s *server) run() {
 }
 
 func (s *server) newClient(conn net.Conn) *client {
-	log.Printf("[SERVER]: %s has joined the chat.", conn.RemoteAddr().String())
+	log.Printf("[SERVER] -- %s has joined the chat.", conn.RemoteAddr().String())
 
 	return &client{
 		conn:     conn,
@@ -48,17 +48,17 @@ func (s *server) newClient(conn net.Conn) *client {
 
 func (s *server) nick(c *client, args []string) {
 	if len(args) < 2 {
-		c.msg("must provide nickname | Ex: usage: /nick NAME")
+		c.msg("[SERVER] -- must provide nickname | Ex: usage: /nick <name>")
 		return
 	}
 
 	c.nick = args[1]
-	c.msg(fmt.Sprintf("all right, I will call you %s", c.nick))
+	c.msg(fmt.Sprintf("[SERVER] -- Nickname changed to: %s", c.nick))
 }
 
 func (s *server) join(c *client, args []string) {
 	if len(args) < 2 {
-		c.msg("room name is required. usage: /join ROOM_NAME")
+		c.msg("[SERVER] -- must provide room name | Ex: usage: /join ROOM_NAME")
 		return
 	}
 
@@ -77,9 +77,9 @@ func (s *server) join(c *client, args []string) {
 	s.quitCurrentRoom(c)
 	c.room = r
 
-	r.broadcast(c, fmt.Sprintf("%s joined the room", c.nick))
+	r.broadcast(c, fmt.Sprintf("[SERVER] -- %s joined the room", c.nick))
 
-	c.msg(fmt.Sprintf("welcome to %s", roomName))
+	c.msg(fmt.Sprintf("[SERVER] -- welcome to %s", roomName))
 }
 
 func (s *server) listRooms(c *client) {
@@ -88,25 +88,18 @@ func (s *server) listRooms(c *client) {
 		rooms = append(rooms, name)
 	}
 
-	c.msg(fmt.Sprintf("available rooms: %s", strings.Join(rooms, ", ")))
+	c.msg(fmt.Sprintf("[SERVER] -- available rooms: %s", strings.Join(rooms, ", ")))
 }
 
 func (s *server) msg(c *client, args []string) {
-	if len(args) < 2 {
-		c.msg("message is required, usage: /msg MSG")
-		return
-	}
-
 	msg := strings.Join(args[1:], " ")
 	c.room.broadcast(c, c.nick+": "+msg)
 }
 
 func (s *server) quit(c *client) {
-	log.Printf("client has left the chat: %s", c.conn.RemoteAddr().String())
+	log.Printf("[SERVER] -- %s has disconnected.", c.conn.RemoteAddr().String())
 
 	s.quitCurrentRoom(c)
-
-	c.msg("sad to see you go =(")
 	c.conn.Close()
 }
 
@@ -114,6 +107,6 @@ func (s *server) quitCurrentRoom(c *client) {
 	if c.room != nil {
 		oldRoom := s.rooms[c.room.name]
 		delete(s.rooms[c.room.name].members, c.conn.RemoteAddr())
-		oldRoom.broadcast(c, fmt.Sprintf("%s has left the room", c.nick))
+		oldRoom.broadcast(c, fmt.Sprintf("[SERVER] -- %s has left the room.", c.nick))
 	}
 }
