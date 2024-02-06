@@ -38,7 +38,7 @@ func (s *server) run() {
 }
 
 func (s *server) newClient(conn net.Conn) *client {
-	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	now := time.Now().Format("2006-01-02 03:04:05 PM")
 	log.Printf("[%s] SERVER: %s has joined the chat.", now, conn.RemoteAddr().String())
 
 	return &client{
@@ -49,7 +49,7 @@ func (s *server) newClient(conn net.Conn) *client {
 }
 
 func (s *server) nick(c *client, args []string) {
-	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	now := time.Now().Format("2006-01-02 03:04:05 PM")
 	if len(args) < 2 {
 		c.msg(fmt.Sprintf("[%s] SERVER: must provide nickname | Ex: usage: /nick <name>", now))
 		return
@@ -65,7 +65,7 @@ func (s *server) nick(c *client, args []string) {
 }
 
 func (s *server) join(c *client, args []string) {
-	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	now := time.Now().Format("2006-01-02 03:04:05 PM")
 	if len(args) < 2 {
 		c.msg(fmt.Sprintf("[%s] -- must provide room name | Ex: usage: /join ROOM_NAME", now))
 		return
@@ -92,7 +92,7 @@ func (s *server) join(c *client, args []string) {
 }
 
 func (s *server) listRooms(c *client) {
-	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	now := time.Now().Format("2006-01-02 03:04:05 PM")
 	var rooms []string
 	for name := range s.rooms {
 		rooms = append(rooms, name)
@@ -102,7 +102,7 @@ func (s *server) listRooms(c *client) {
 }
 
 func (s *server) msg(c *client, args []string) {
-	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	now := time.Now().Format("2006-01-02 03:04:05 PM")
 	if c.room == nil {
 		c.msg(fmt.Sprintf("[%s] SERVER: must join a room first | Ex: usage: /join ROOM_NAME", now))
 		return
@@ -112,7 +112,7 @@ func (s *server) msg(c *client, args []string) {
 }
 
 func (s *server) quit(c *client) {
-	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	now := time.Now().Format("2006-01-02 03:04:05 PM")
 	log.Printf("[%s] SERVER: %s has disconnected.", now, c.conn.RemoteAddr().String())
 
 	s.quitCurrentRoom(c)
@@ -121,7 +121,7 @@ func (s *server) quit(c *client) {
 
 func (s *server) quitCurrentRoom(c *client) {
 	if c.room != nil {
-		now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+		now := time.Now().Format("2006-01-02 03:04:05 PM")
 		oldRoom := s.rooms[c.room.name]
 		delete(s.rooms[c.room.name].members, c.conn.RemoteAddr())
 		oldRoom.broadcast(c, fmt.Sprintf("[%s] SERVER: %s has left the room.", now, c.nick))
