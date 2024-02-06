@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 )
 
 type server struct {
@@ -37,7 +38,8 @@ func (s *server) run() {
 }
 
 func (s *server) newClient(conn net.Conn) *client {
-	log.Printf("[SERVER] -- %s has joined the chat.", conn.RemoteAddr().String())
+	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	log.Printf("[%s] SERVER: %s has joined the chat.", now, conn.RemoteAddr().String())
 
 	return &client{
 		conn:     conn,
@@ -47,18 +49,25 @@ func (s *server) newClient(conn net.Conn) *client {
 }
 
 func (s *server) nick(c *client, args []string) {
+	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
 	if len(args) < 2 {
-		c.msg("[SERVER] -- must provide nickname | Ex: usage: /nick <name>")
+		c.msg(fmt.Sprintf("[%s] SERVER: must provide nickname | Ex: usage: /nick <name>", now))
+		return
+	} else if c.nick == args[1] {
+		c.msg(fmt.Sprintf("[%s] SERVER: nickname is already %s", now, c.nick))
+		return
+	} else if strings.ToLower(args[1]) == "server" {
+		c.msg(fmt.Sprintf("[%s] SERVER: nickname cannot be: %s", now, c.nick))
 		return
 	}
-
 	c.nick = args[1]
-	c.msg(fmt.Sprintf("[SERVER] -- Nickname changed to: %s", c.nick))
+	c.msg(fmt.Sprintf("[%s] SERVER: nickname changed to: %s", now, c.nick))
 }
 
 func (s *server) join(c *client, args []string) {
+	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
 	if len(args) < 2 {
-		c.msg("[SERVER] -- must provide room name | Ex: usage: /join ROOM_NAME")
+		c.msg(fmt.Sprintf("[%s] -- must provide room name | Ex: usage: /join ROOM_NAME", now))
 		return
 	}
 
@@ -77,27 +86,34 @@ func (s *server) join(c *client, args []string) {
 	s.quitCurrentRoom(c)
 	c.room = r
 
-	r.broadcast(c, fmt.Sprintf("[SERVER] -- %s joined the room", c.nick))
+	r.broadcast(c, fmt.Sprintf("[%s] SERVER: %s joined the room", now, c.nick))
 
-	c.msg(fmt.Sprintf("[SERVER] -- welcome to %s", roomName))
+	c.msg(fmt.Sprintf("[%s] SERVER: welcome to %s", now, roomName))
 }
 
 func (s *server) listRooms(c *client) {
+	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
 	var rooms []string
 	for name := range s.rooms {
 		rooms = append(rooms, name)
 	}
 
-	c.msg(fmt.Sprintf("[SERVER] -- available rooms: %s", strings.Join(rooms, ", ")))
+	c.msg(fmt.Sprintf("[%s] SERVER: available rooms: %s", now, strings.Join(rooms, ", ")))
 }
 
 func (s *server) msg(c *client, args []string) {
-	msg := strings.Join(args[1:], " ")
-	c.room.broadcast(c, c.nick+": "+msg)
+	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	if c.room == nil {
+		c.msg(fmt.Sprintf("[%s] SERVER: must join a room first | Ex: usage: /join ROOM_NAME", now))
+		return
+	}
+	msg := strings.Join(args, " ")
+	c.room.broadcast(c, "["+now+"]"+" "+c.nick+": "+msg)
 }
 
 func (s *server) quit(c *client) {
-	log.Printf("[SERVER] -- %s has disconnected.", c.conn.RemoteAddr().String())
+	now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
+	log.Printf("[%s] SERVER: %s has disconnected.", now, c.conn.RemoteAddr().String())
 
 	s.quitCurrentRoom(c)
 	c.conn.Close()
@@ -105,8 +121,9 @@ func (s *server) quit(c *client) {
 
 func (s *server) quitCurrentRoom(c *client) {
 	if c.room != nil {
+		now := time.Now().Format("YYYY-MM-DD HH:MM:SS")
 		oldRoom := s.rooms[c.room.name]
 		delete(s.rooms[c.room.name].members, c.conn.RemoteAddr())
-		oldRoom.broadcast(c, fmt.Sprintf("[SERVER] -- %s has left the room.", c.nick))
+		oldRoom.broadcast(c, fmt.Sprintf("[%s] SERVER: %s has left the room.", now, c.nick))
 	}
 }
